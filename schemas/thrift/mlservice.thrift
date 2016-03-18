@@ -1,0 +1,3 @@
+service MLService {
+    void ping(),
+}
