@@ -1,0 +1,2 @@
+#!/bin/bash
+thrift -r --gen py -r -out schemas schemas/thrift/mlservice.thrift
