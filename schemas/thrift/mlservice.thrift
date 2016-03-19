@@ -16,5 +16,5 @@ struct Model {
 service MLService {
   void ping(),
   void buildModel(1:string dataSetId, 2:ModelType modelType),
-  Vector predict(1:string modelId, 2:Vector input),
+  Vector predict(1:string modelId, 2:Vector dataInput),
 }

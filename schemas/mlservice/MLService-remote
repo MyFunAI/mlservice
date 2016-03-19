@@ -26,7 +26,7 @@ if len(sys.argv) <= 1 or sys.argv[1] == '--help':
   print('Functions:')
   print('  void ping()')
   print('  void buildModel(string dataSetId, ModelType modelType)')
-  print('  Vector predict(string modelId, Vector input)')
+  print('  Vector predict(string modelId, Vector dataInput)')
   print('')
   sys.exit(0)
 

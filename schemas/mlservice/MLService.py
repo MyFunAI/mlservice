@@ -30,11 +30,11 @@ class Iface:
     """
     pass
 
-  def predict(self, modelId, input):
+  def predict(self, modelId, dataInput):
     """
     Parameters:
      - modelId
-     - input
+     - dataInput
     """
     pass
 
@@ -101,20 +101,20 @@ class Client(Iface):
     iprot.readMessageEnd()
     return
 
-  def predict(self, modelId, input):
+  def predict(self, modelId, dataInput):
     """
     Parameters:
      - modelId
-     - input
+     - dataInput
     """
-    self.send_predict(modelId, input)
+    self.send_predict(modelId, dataInput)
     return self.recv_predict()
 
-  def send_predict(self, modelId, input):
+  def send_predict(self, modelId, dataInput):
     self._oprot.writeMessageBegin('predict', TMessageType.CALL, self._seqid)
     args = predict_args()
     args.modelId = modelId
-    args.input = input
+    args.dataInput = dataInput
     args.write(self._oprot)
     self._oprot.writeMessageEnd()
     self._oprot.trans.flush()
@@ -202,7 +202,7 @@ class Processor(Iface, TProcessor):
     iprot.readMessageEnd()
     result = predict_result()
     try:
-      result.success = self._handler.predict(args.modelId, args.input)
+      result.success = self._handler.predict(args.modelId, args.dataInput)
       msg_type = TMessageType.REPLY
     except (TTransport.TTransportException, KeyboardInterrupt, SystemExit):
       raise
@@ -438,18 +438,18 @@ class predict_args:
   """
   Attributes:
    - modelId
-   - input
+   - dataInput
   """
 
   thrift_spec = (
     None, # 0
     (1, TType.STRING, 'modelId', None, None, ), # 1
-    (2, TType.MAP, 'input', (TType.I32,None,TType.DOUBLE,None), None, ), # 2
+    (2, TType.MAP, 'dataInput', (TType.I32,None,TType.DOUBLE,None), None, ), # 2
   )
 
-  def __init__(self, modelId=None, input=None,):
+  def __init__(self, modelId=None, dataInput=None,):
     self.modelId = modelId
-    self.input = input
+    self.dataInput = dataInput
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -467,12 +467,12 @@ class predict_args:
           iprot.skip(ftype)
       elif fid == 2:
         if ftype == TType.MAP:
-          self.input = {}
+          self.dataInput = {}
           (_ktype1, _vtype2, _size0 ) = iprot.readMapBegin()
           for _i4 in xrange(_size0):
             _key5 = iprot.readI32()
             _val6 = iprot.readDouble()
-            self.input[_key5] = _val6
+            self.dataInput[_key5] = _val6
           iprot.readMapEnd()
         else:
           iprot.skip(ftype)
@@ -490,10 +490,10 @@ class predict_args:
       oprot.writeFieldBegin('modelId', TType.STRING, 1)
       oprot.writeString(self.modelId)
       oprot.writeFieldEnd()
-    if self.input is not None:
-      oprot.writeFieldBegin('input', TType.MAP, 2)
-      oprot.writeMapBegin(TType.I32, TType.DOUBLE, len(self.input))
-      for kiter7,viter8 in self.input.items():
+    if self.dataInput is not None:
+      oprot.writeFieldBegin('dataInput', TType.MAP, 2)
+      oprot.writeMapBegin(TType.I32, TType.DOUBLE, len(self.dataInput))
+      for kiter7,viter8 in self.dataInput.items():
         oprot.writeI32(kiter7)
         oprot.writeDouble(viter8)
       oprot.writeMapEnd()
@@ -508,7 +508,7 @@ class predict_args:
   def __hash__(self):
     value = 17
     value = (value * 31) ^ hash(self.modelId)
-    value = (value * 31) ^ hash(self.input)
+    value = (value * 31) ^ hash(self.dataInput)
     return value
 
   def __repr__(self):
