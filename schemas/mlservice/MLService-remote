@@ -25,6 +25,8 @@ if len(sys.argv) <= 1 or sys.argv[1] == '--help':
   print('')
   print('Functions:')
   print('  void ping()')
+  print('  void buildModel(string dataSetId, ModelType modelType)')
+  print('  Vector predict(string modelId, Vector input)')
   print('')
   sys.exit(0)
 
@@ -86,6 +88,18 @@ if cmd == 'ping':
     print('ping requires 0 args')
     sys.exit(1)
   pp.pprint(client.ping())
+
+elif cmd == 'buildModel':
+  if len(args) != 2:
+    print('buildModel requires 2 args')
+    sys.exit(1)
+  pp.pprint(client.buildModel(args[0],eval(args[1]),))
+
+elif cmd == 'predict':
+  if len(args) != 2:
+    print('predict requires 2 args')
+    sys.exit(1)
+  pp.pprint(client.predict(args[0],eval(args[1]),))
 
 else:
   print('Unrecognized method %s' % cmd)

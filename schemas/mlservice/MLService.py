@@ -22,6 +22,22 @@ class Iface:
   def ping(self):
     pass
 
+  def buildModel(self, dataSetId, modelType):
+    """
+    Parameters:
+     - dataSetId
+     - modelType
+    """
+    pass
+
+  def predict(self, modelId, input):
+    """
+    Parameters:
+     - modelId
+     - input
+    """
+    pass
+
 
 class Client(Iface):
   def __init__(self, iprot, oprot=None):
@@ -54,12 +70,78 @@ class Client(Iface):
     iprot.readMessageEnd()
     return
 
+  def buildModel(self, dataSetId, modelType):
+    """
+    Parameters:
+     - dataSetId
+     - modelType
+    """
+    self.send_buildModel(dataSetId, modelType)
+    self.recv_buildModel()
+
+  def send_buildModel(self, dataSetId, modelType):
+    self._oprot.writeMessageBegin('buildModel', TMessageType.CALL, self._seqid)
+    args = buildModel_args()
+    args.dataSetId = dataSetId
+    args.modelType = modelType
+    args.write(self._oprot)
+    self._oprot.writeMessageEnd()
+    self._oprot.trans.flush()
+
+  def recv_buildModel(self):
+    iprot = self._iprot
+    (fname, mtype, rseqid) = iprot.readMessageBegin()
+    if mtype == TMessageType.EXCEPTION:
+      x = TApplicationException()
+      x.read(iprot)
+      iprot.readMessageEnd()
+      raise x
+    result = buildModel_result()
+    result.read(iprot)
+    iprot.readMessageEnd()
+    return
+
+  def predict(self, modelId, input):
+    """
+    Parameters:
+     - modelId
+     - input
+    """
+    self.send_predict(modelId, input)
+    return self.recv_predict()
+
+  def send_predict(self, modelId, input):
+    self._oprot.writeMessageBegin('predict', TMessageType.CALL, self._seqid)
+    args = predict_args()
+    args.modelId = modelId
+    args.input = input
+    args.write(self._oprot)
+    self._oprot.writeMessageEnd()
+    self._oprot.trans.flush()
+
+  def recv_predict(self):
+    iprot = self._iprot
+    (fname, mtype, rseqid) = iprot.readMessageBegin()
+    if mtype == TMessageType.EXCEPTION:
+      x = TApplicationException()
+      x.read(iprot)
+      iprot.readMessageEnd()
+      raise x
+    result = predict_result()
+    result.read(iprot)
+    iprot.readMessageEnd()
+    if result.success is not None:
+      return result.success
+    raise TApplicationException(TApplicationException.MISSING_RESULT, "predict failed: unknown result")
+
 
 class Processor(Iface, TProcessor):
   def __init__(self, handler):
     self._handler = handler
     self._processMap = {}
     self._processMap["ping"] = Processor.process_ping
+    self._processMap["buildModel"] = Processor.process_buildModel
+    self._processMap["predict"] = Processor.process_predict
 
   def process(self, iprot, oprot):
     (name, type, seqid) = iprot.readMessageBegin()
@@ -91,6 +173,44 @@ class Processor(Iface, TProcessor):
       logging.exception(ex)
       result = TApplicationException(TApplicationException.INTERNAL_ERROR, 'Internal error')
     oprot.writeMessageBegin("ping", msg_type, seqid)
+    result.write(oprot)
+    oprot.writeMessageEnd()
+    oprot.trans.flush()
+
+  def process_buildModel(self, seqid, iprot, oprot):
+    args = buildModel_args()
+    args.read(iprot)
+    iprot.readMessageEnd()
+    result = buildModel_result()
+    try:
+      self._handler.buildModel(args.dataSetId, args.modelType)
+      msg_type = TMessageType.REPLY
+    except (TTransport.TTransportException, KeyboardInterrupt, SystemExit):
+      raise
+    except Exception as ex:
+      msg_type = TMessageType.EXCEPTION
+      logging.exception(ex)
+      result = TApplicationException(TApplicationException.INTERNAL_ERROR, 'Internal error')
+    oprot.writeMessageBegin("buildModel", msg_type, seqid)
+    result.write(oprot)
+    oprot.writeMessageEnd()
+    oprot.trans.flush()
+
+  def process_predict(self, seqid, iprot, oprot):
+    args = predict_args()
+    args.read(iprot)
+    iprot.readMessageEnd()
+    result = predict_result()
+    try:
+      result.success = self._handler.predict(args.modelId, args.input)
+      msg_type = TMessageType.REPLY
+    except (TTransport.TTransportException, KeyboardInterrupt, SystemExit):
+      raise
+    except Exception as ex:
+      msg_type = TMessageType.EXCEPTION
+      logging.exception(ex)
+      result = TApplicationException(TApplicationException.INTERNAL_ERROR, 'Internal error')
+    oprot.writeMessageBegin("predict", msg_type, seqid)
     result.write(oprot)
     oprot.writeMessageEnd()
     oprot.trans.flush()
@@ -177,6 +297,292 @@ class ping_result:
 
   def __hash__(self):
     value = 17
+    return value
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
+class buildModel_args:
+  """
+  Attributes:
+   - dataSetId
+   - modelType
+  """
+
+  thrift_spec = (
+    None, # 0
+    (1, TType.STRING, 'dataSetId', None, None, ), # 1
+    (2, TType.I32, 'modelType', None, None, ), # 2
+  )
+
+  def __init__(self, dataSetId=None, modelType=None,):
+    self.dataSetId = dataSetId
+    self.modelType = modelType
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.STRING:
+          self.dataSetId = iprot.readString()
+        else:
+          iprot.skip(ftype)
+      elif fid == 2:
+        if ftype == TType.I32:
+          self.modelType = iprot.readI32()
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('buildModel_args')
+    if self.dataSetId is not None:
+      oprot.writeFieldBegin('dataSetId', TType.STRING, 1)
+      oprot.writeString(self.dataSetId)
+      oprot.writeFieldEnd()
+    if self.modelType is not None:
+      oprot.writeFieldBegin('modelType', TType.I32, 2)
+      oprot.writeI32(self.modelType)
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+
+  def validate(self):
+    return
+
+
+  def __hash__(self):
+    value = 17
+    value = (value * 31) ^ hash(self.dataSetId)
+    value = (value * 31) ^ hash(self.modelType)
+    return value
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
+class buildModel_result:
+
+  thrift_spec = (
+  )
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('buildModel_result')
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+
+  def validate(self):
+    return
+
+
+  def __hash__(self):
+    value = 17
+    return value
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
+class predict_args:
+  """
+  Attributes:
+   - modelId
+   - input
+  """
+
+  thrift_spec = (
+    None, # 0
+    (1, TType.STRING, 'modelId', None, None, ), # 1
+    (2, TType.MAP, 'input', (TType.I32,None,TType.DOUBLE,None), None, ), # 2
+  )
+
+  def __init__(self, modelId=None, input=None,):
+    self.modelId = modelId
+    self.input = input
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.STRING:
+          self.modelId = iprot.readString()
+        else:
+          iprot.skip(ftype)
+      elif fid == 2:
+        if ftype == TType.MAP:
+          self.input = {}
+          (_ktype1, _vtype2, _size0 ) = iprot.readMapBegin()
+          for _i4 in xrange(_size0):
+            _key5 = iprot.readI32()
+            _val6 = iprot.readDouble()
+            self.input[_key5] = _val6
+          iprot.readMapEnd()
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('predict_args')
+    if self.modelId is not None:
+      oprot.writeFieldBegin('modelId', TType.STRING, 1)
+      oprot.writeString(self.modelId)
+      oprot.writeFieldEnd()
+    if self.input is not None:
+      oprot.writeFieldBegin('input', TType.MAP, 2)
+      oprot.writeMapBegin(TType.I32, TType.DOUBLE, len(self.input))
+      for kiter7,viter8 in self.input.items():
+        oprot.writeI32(kiter7)
+        oprot.writeDouble(viter8)
+      oprot.writeMapEnd()
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+
+  def validate(self):
+    return
+
+
+  def __hash__(self):
+    value = 17
+    value = (value * 31) ^ hash(self.modelId)
+    value = (value * 31) ^ hash(self.input)
+    return value
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
+class predict_result:
+  """
+  Attributes:
+   - success
+  """
+
+  thrift_spec = (
+    (0, TType.MAP, 'success', (TType.I32,None,TType.DOUBLE,None), None, ), # 0
+  )
+
+  def __init__(self, success=None,):
+    self.success = success
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 0:
+        if ftype == TType.MAP:
+          self.success = {}
+          (_ktype10, _vtype11, _size9 ) = iprot.readMapBegin()
+          for _i13 in xrange(_size9):
+            _key14 = iprot.readI32()
+            _val15 = iprot.readDouble()
+            self.success[_key14] = _val15
+          iprot.readMapEnd()
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('predict_result')
+    if self.success is not None:
+      oprot.writeFieldBegin('success', TType.MAP, 0)
+      oprot.writeMapBegin(TType.I32, TType.DOUBLE, len(self.success))
+      for kiter16,viter17 in self.success.items():
+        oprot.writeI32(kiter16)
+        oprot.writeDouble(viter17)
+      oprot.writeMapEnd()
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+
+  def validate(self):
+    return
+
+
+  def __hash__(self):
+    value = 17
+    value = (value * 31) ^ hash(self.success)
     return value
 
   def __repr__(self):
